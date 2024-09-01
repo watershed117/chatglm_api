@@ -85,24 +85,3 @@ class ChatGLM:
             return True
         else:
             return False
-
-
-if __name__ == "__main__":
-    import asyncio
-    api_key = "937041ab8a8913329177a408cc96fd4b.lC8CldSAjskjGtgS"
-    chatglm = ChatGLM(
-        api_key, storage="C:\\Users\\water\\Desktop\\bot\\noa\\data\\chatglm")
-
-    async def main():
-        reply = await chatglm.send({"role": "user", "content": "你好"})
-        print(reply)
-        id = await chatglm.save()
-        print(id)
-        await chatglm.load(id)
-        print(chatglm.history)
-        conversations = await chatglm.get_conversations()
-        print(conversations)
-        # await chatglm.delete_conversation(id)
-        conversations = await chatglm.get_conversations()
-        print(conversations)
-    asyncio.run(main())
