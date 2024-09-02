@@ -5,14 +5,19 @@ import json
 
 
 class ChatGLM:
-    def __init__(self, api_key: str, model: str = "glm-4-flash", storage: str = ""):
+    def __init__(self, api_key: str, model: str = "glm-4-flash", storage: str = "", tools: list = [], system_prompt: str = "",timeout:int = 30):
         self.model = model
         self.client = httpx.AsyncClient(
-            headers={"Authorization": f"Bearer {api_key}"})
+            headers={"Authorization": f"Bearer {api_key}"},
+            timeout=timeout)
         self.history = []
         self.storage = storage
+        self.tools = tools
+        self.system_prompt = system_prompt
         if not self.is_valid_path(storage):
             raise ValueError("storage path is not valid")
+        if system_prompt:
+            self.history.append({"role": "system", "content": system_prompt})
 
     def is_valid_path(self, path_str: str):
         try:
@@ -24,18 +29,21 @@ class ChatGLM:
     def get_creation_time(self, file_path):
         return os.path.getctime(file_path)
 
-    async def send(self, message: dict):
+    async def send(self, messages: dict):
         url = "https://open.bigmodel.cn/api/paas/v4/chat/completions"
         async with self.client as client:
-            self.history.append(message)
+            self.history.append(messages)
             playload = {"model": self.model, "messages": self.history}
+            if self.tools:
+                playload.update({"tools": self.tools})
             response = await client.post(url, json=playload)
             if response.status_code == 200:
                 result = response.json()
-                # print(result)
+                print(result)
                 content = result["choices"][0]["message"]
-                self.history.append({"role": content.get(
-                    "role"), "content": content.get("content")})
+                if content.get("content"):
+                    self.history.append({"role": content.get(
+                        "role"), "content": content.get("content")})
                 return content
             else:
                 return response.status_code, response.json()
